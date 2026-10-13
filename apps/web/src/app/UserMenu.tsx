@@ -82,7 +82,15 @@ export default function UserMenu({
         </div>
         {/* TODO Add Icons? */}
         <div className="py-1">
-          <UserMenuLink href={LOGOUT_URL}>Logout</UserMenuLink>
+          {/* A full page load, so the auth state is fetched again after the
+              session is deleted. */}
+          <a
+            role="menuitem"
+            href={LOGOUT_URL}
+            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            Logout
+          </a>
         </div>
         {/* Add Switch Account options */}
       </div>
