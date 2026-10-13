@@ -72,6 +72,24 @@ resource "google_artifact_registry_repository" "cloud_run_source_deploy" {
   mode          = "STANDARD_REPOSITORY"
   repository_id = "repo"
 
+  # Keep only the image Cloud Run is serving; Cloud Run re-pulls it on every
+  # instance start, so keep_count must never drop below 1.
+  cleanup_policy_dry_run = false
+  cleanup_policies {
+    id     = "keep-latest"
+    action = "KEEP"
+    most_recent_versions {
+      keep_count = 1
+    }
+  }
+  cleanup_policies {
+    id     = "delete-rest"
+    action = "DELETE"
+    condition {
+      tag_state = "ANY"
+    }
+  }
+
   depends_on = [google_project_service.artifactregistry_googleapis_com]
 }
 
@@ -129,7 +147,7 @@ resource "google_project_iam_member" "app_firestore_binding" {
 resource "google_project_iam_member" "app_end-meetings_queue_binding" {
   member = "serviceAccount:${google_service_account.app.email}"
   # TODO enqueuer roles give permisson denied
-  role   = "roles/cloudtasks.admin"
+  role = "roles/cloudtasks.admin"
   condition {
     expression = "resource.name==\"projects/${var.project}/locations/${var.tasks_region}/queues/end-meetings1\""
     title      = "Limit access to one resource"
