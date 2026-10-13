@@ -27,15 +27,15 @@ export async function GET(req: NextRequest) {
   }
 
   if (!("state" in session) || typeof session.state === "undefined") {
-    logger.error("Could not find state in session", { session });
+    logger.error("Could not find state in session");
     return new NextResponse("Could not find state in session", { status: 400 });
   }
 
   const state = req.nextUrl.searchParams.get("state");
 
   if (state !== session.state) {
-    const errorMsg = `Stored state ${session.state} does not match received state ${state}`;
-    logger.error(errorMsg, { session });
+    const errorMsg = "Stored state does not match received state";
+    logger.error(errorMsg);
     return new NextResponse(errorMsg, { status: 400 });
   }
 

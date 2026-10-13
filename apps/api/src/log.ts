@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import { PROJECT_ID } from "./shared/server_constants";
-import { SessionData } from "./app/session-store";
 
 const USE_STRUCTURED_LOGGING = process.env.USE_STRUCTURED_LOGGING === "true";
 
@@ -18,9 +17,7 @@ export type LogEntry = {
   userId?: string;
   meetingCode?: string;
   logName: string;
-  session?: SessionData;
   taskName?: string;
-  sessionId?: string;
   additional?: unknown;
 };
 

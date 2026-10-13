@@ -68,7 +68,7 @@ async function createNewSession(
   data: NewSession,
 ): Promise<void> {
   await db.collection("session").doc(sessionId).set(data);
-  logger.debug(`Session ${sessionId} created`, { sessionId });
+  logger.debug("Session created");
 }
 
 async function _set(sessionId: string, data: SessionData): Promise<void> {
@@ -140,9 +140,9 @@ export async function deleteSession(): Promise<void> {
     try {
       await db.collection("session").doc(sessionId).delete();
     } catch (e) {
-      logger.error(e, { sessionId });
+      logger.error(e);
     }
-    logger.debug(`Session ${sessionId} deleted`, { sessionId });
+    logger.debug("Session deleted");
     const cookieStore = await cookies();
     cookieStore.delete(SESSION_ID_NAME);
   }
