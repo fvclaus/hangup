@@ -1,1 +1,14 @@
-Dockerfile
+**/node_modules
+**/.next
+**/.open-next
+**/.wrangler
+.git
+**/Dockerfile
+**/Dockerfile.ct
+**/.env*.local
+**/test-results
+**/playwright-report
+**/__snapshots__
+.terraform
+*.tfstate*
+"No Meeting Overtime.zip"

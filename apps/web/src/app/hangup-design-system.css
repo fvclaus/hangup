@@ -1,0 +1,157 @@
+/* ============================================================================
+   HangUp / Lights Out — design-system tokens (single source of truth)
+   ----------------------------------------------------------------------------
+   Ported from the Claude Design handoff bundle:
+     no-meeting-overtime/project/tokens/{colors,typography,spacing,effects}.css
+
+   The day-and-night MODE system: set data-mode="dawn|day|dusk|night" on a
+   container and every --m-* token resolves to that mode's value. A component
+   written once restyles itself purely by the data-mode it sits under.
+
+   Two layers, kept separate so they don't collide with the app-wide
+   shadcn/Tailwind tokens already defined in styles.css (--radius-*, --color-*):
+     • MODE PALETTES  → published on [data-mode] (and :root defaults to night)
+     • BASE TOKENS    → type / spacing / radii / effects, scoped to .hangup
+   ========================================================================== */
+
+/* ---- Fonts (families only; the @import lives in styles.css) -------------- */
+:root {
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  /* The mode system uses Fredoka for display / numerals (rounder, softer). */
+  --font-display-mode: "Fredoka", ui-sans-serif, system-ui, sans-serif;
+  /* "Sign in with Google" label — Google requires Roboto Medium. */
+  --font-google: "Roboto", arial, sans-serif;
+}
+
+/* ===========================================================================
+   MODE PALETTES — one full palette per position of the sun/moon in the sky.
+   Token names are identical across modes (see the bundle's colors.css). The
+   --m-sun-* / --m-cloud tokens are extensions that drive the animated sky.
+   =========================================================================== */
+
+/* ---- DAWN — soft lilac→peach sunrise, light surface --------------------- */
+[data-mode="dawn"] {
+  --m-sky: linear-gradient(177deg, #b9c4e8 0%, #e7c9d6 40%, #f6d9c0 70%, #fde8d6 100%);
+  --m-accent: #e07a5f;  --m-accent-rgb: 224, 122, 95;  --m-ink: #ffffff;
+  --m-heading: #3b2a3f; --m-body: #6d5a66; --m-muted: #9a8794; --m-nav: #74616e;
+  --m-step: #ecd6da;
+  --m-header-bg: rgba(255, 251, 249, 0.50); --m-header-border: rgba(59, 42, 63, 0.08);
+  --m-card: rgba(255, 253, 251, 0.82); --m-card-border: rgba(59, 42, 63, 0.10);
+  --m-card-shadow: 0 28px 70px rgba(190, 140, 140, 0.22);
+  --m-track: rgba(255, 251, 249, 0.55); --m-track-border: rgba(59, 42, 63, 0.10);
+  --m-sun-core: #fff2ea; --m-sun-mid: #ffd2bf; --m-sun-e1: #ff9e85; --m-sun-e2: #f5836a;
+  --m-sun-glow: rgba(255, 150, 120, 0.40); --m-sun-glow2: rgba(255, 200, 180, 0.50);
+  --m-cloud: #fff4ec;
+}
+
+/* ---- DAY — bright blue→warm-white midday, light surface ----------------- */
+[data-mode="day"] {
+  --m-sky: linear-gradient(177deg, #bcdcf2 0%, #d6e8f1 44%, #ecf1ec 74%, #f6ede0 100%);
+  --m-accent: #2f7fd6;  --m-accent-rgb: 47, 127, 214;  --m-ink: #ffffff;
+  --m-heading: #16263e; --m-body: #4d5a72; --m-muted: #7c889e; --m-nav: #56627c;
+  --m-step: #c4d3e4;
+  --m-header-bg: rgba(255, 255, 255, 0.50); --m-header-border: rgba(20, 35, 58, 0.08);
+  --m-card: rgba(255, 255, 255, 0.80); --m-card-border: rgba(20, 35, 58, 0.10);
+  --m-card-shadow: 0 28px 70px rgba(60, 90, 130, 0.18);
+  --m-track: rgba(255, 255, 255, 0.55); --m-track-border: rgba(20, 35, 58, 0.10);
+  --m-sun-core: #fff7e0; --m-sun-mid: #ffe49c; --m-sun-e1: #ffd070; --m-sun-e2: #ffbf57;
+  --m-sun-glow: rgba(255, 206, 110, 0.42); --m-sun-glow2: rgba(255, 224, 150, 0.55);
+  --m-cloud: #ffffff;
+}
+
+/* ---- DUSK — plum→magenta sunset, dark surface -------------------------- */
+[data-mode="dusk"] {
+  --m-sky: linear-gradient(177deg, #241f44 0%, #3a2b58 45%, #4a2f55 78%, #3a2440 100%);
+  --m-accent: #ff9e6b;  --m-accent-rgb: 255, 158, 107;  --m-ink: #36180e;
+  --m-heading: #f6ecf2; --m-body: #cbb9cc; --m-muted: #a892ac; --m-nav: #bda7bd;
+  --m-step: #4a3560;
+  --m-header-bg: rgba(36, 31, 68, 0.50); --m-header-border: rgba(255, 255, 255, 0.09);
+  --m-card: rgba(46, 38, 78, 0.62); --m-card-border: rgba(255, 255, 255, 0.13);
+  --m-card-shadow: 0 28px 70px rgba(15, 8, 30, 0.55);
+  --m-track: rgba(255, 255, 255, 0.09); --m-track-border: rgba(255, 255, 255, 0.15);
+  --m-sun-core: #ffe7cf; --m-sun-mid: #ffb583; --m-sun-e1: #ff8a52; --m-sun-e2: #f5733f;
+  --m-sun-glow: rgba(255, 120, 70, 0.42); --m-sun-glow2: rgba(255, 170, 110, 0.50);
+  --m-cloud: #ffffff;
+}
+
+/* ---- NIGHT — near-black navy, dark surface (the brand's home) ----------- */
+:root,
+[data-mode="night"] {
+  --m-sky: linear-gradient(177deg, #070a1f 0%, #0e1230 46%, #1b1838 78%, #271d36 100%);
+  --m-accent: #79b4ec;  --m-accent-rgb: 121, 180, 236;  --m-ink: #0a1c2e;
+  --m-heading: #f3f4ff; --m-body: #a7adce; --m-muted: #757b9c; --m-nav: #9aa0c4;
+  --m-step: #2c4763;
+  --m-header-bg: rgba(7, 10, 31, 0.55); --m-header-border: rgba(255, 255, 255, 0.07);
+  --m-card: rgba(14, 18, 48, 0.72); --m-card-border: rgba(255, 255, 255, 0.12);
+  --m-card-shadow: 0 28px 70px rgba(0, 0, 0, 0.60);
+  --m-track: rgba(255, 255, 255, 0.06); --m-track-border: rgba(255, 255, 255, 0.12);
+  --m-sun-core: #fff7e0; --m-sun-mid: #ffe49c; --m-sun-e1: #ffd070; --m-sun-e2: #ffbf57;
+  --m-sun-glow: rgba(255, 206, 110, 0.42); --m-sun-glow2: rgba(255, 224, 150, 0.55);
+  --m-cloud: #ffffff;
+}
+
+/* ===========================================================================
+   BASE TOKENS — type, spacing, radii, effects. Scoped to .hangup so the
+   design-system radii never shadow the app-wide Tailwind/shadcn --radius-*.
+   =========================================================================== */
+.hangup {
+  /* Display / headings (Space Grotesk) */
+  --type-hero: 700 60px/1.04 var(--font-display);
+  --type-display: 700 54px/1 var(--font-display);
+  --type-h2: 700 36px/1.1 var(--font-display);
+  --type-step: 700 28px/1 var(--font-display);
+  --type-logo: 700 18px/1 var(--font-display);
+
+  /* Body / UI (Hanken Grotesk) */
+  --type-lead: 400 19px/1.6 var(--font-body);
+  --type-body: 400 16px/1.6 var(--font-body);
+  --type-ui: 500 15px/1 var(--font-body);
+  --type-label: 600 14px/1 var(--font-body);
+  --type-small: 400 14px/1.55 var(--font-body);
+  --type-eyebrow: 600 12px/1 var(--font-body);
+
+  /* Tracking */
+  --track-hero: -0.03em;
+  --track-display: -0.03em;
+  --track-tight: -0.01em;
+  --track-eyebrow: 0.14em;
+
+  /* Spacing scale (4px base) */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px; --space-5: 22px;
+  --space-6: 28px; --space-7: 36px; --space-8: 44px; --space-9: 56px; --space-10: 84px;
+
+  /* Radii — the "Soft" treatment: big rounded cards + full pills */
+  --radius-chip: 8px;
+  --radius-cta: 11px;
+  --radius-card: 16px;       /* legacy card */
+  --radius-card-soft: 32px;  /* soft card */
+  --radius-pill: 999px;
+
+  /* Layout */
+  --pad-section: 56px;
+  --maxw-copy: 480px;
+  --card-w: 366px;
+
+  /* Effects */
+  --shadow-card: 0 28px 70px rgba(0, 0, 0, 0.5);
+  --shadow-soft: 0 18px 44px rgba(0, 0, 0, 0.35);
+  --ring-accent: 0 0 0 4px rgba(var(--m-accent-rgb), 0.35);
+
+  /* Motion */
+  --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+}
+
+/* ===========================================================================
+   MOTION — ambient keyframes used by the animated sky.
+   =========================================================================== */
+@keyframes hu-star-twinkle { 0%, 100% { opacity: 0.9; } 50% { opacity: 0.4; } }
+@keyframes hu-cloud-drift  { from { transform: translateX(-26px); } to { transform: translateX(26px); } }
+@keyframes hu-float-bob    { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+/* Respect users who prefer reduced motion — hold the sky still. */
+@media (prefers-reduced-motion: reduce) {
+  .hangup [data-hu-animate] { animation: none !important; }
+}

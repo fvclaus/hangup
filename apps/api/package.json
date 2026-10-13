@@ -1,0 +1,35 @@
+{
+  "name": "@hangup/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack -p 3001",
+    "build": "next build --webpack",
+    "start": "next start -p 3001",
+    "lint": "eslint",
+    "test:unit": "vitest run"
+  },
+  "dependencies": {
+    "@google-apps/meet": "^0.7.2",
+    "@google-cloud/firestore": "^8.6.0",
+    "@google-cloud/local-auth": "^3.0.1",
+    "@google-cloud/tasks": "^6.2.3",
+    "@hangup/shared": "workspace:*",
+    "date-fns": "^4.4.0",
+    "google-auth-library": "^10.7.0",
+    "googleapis": "^173.0.0",
+    "next": "^16.2.9",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.7.0",
+    "jsdom": "^29.1.1",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.1.9"
+  }
+}

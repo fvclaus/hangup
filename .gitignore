@@ -1,6 +1,7 @@
 # next.js
-/.next
+.next/
 out
+next-env.d.ts
 
 certificates
 .vercel
@@ -8,10 +9,39 @@ certificates
 node_modules
 .terraform/
 terraform.tfvars
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+__snapshots__/.cache/
 .claude/settings.local.json
 .claude/worktrees
 tsconfig.tsbuildinfo
+
+# cloudflare / opennext
+.wrangler/
+.open-next/
+.dev.vars
+cloudflare-env.d.ts
+
+# Claude Code sandbox bind-mount stubs (created automatically on each launch)
+.bash_profile
+.bashrc
+.gitconfig
+.gitmodules
+.idea
+.mcp.json
+.profile
+.ripgreprc
+.zprofile
+.zshrc
+
+*.zip
+
+# Same, under .claude/. The masked *directories* (agents, commands, hooks,
+# routines, skills, workflows) are pre-created with a tracked .gitkeep by
+# safe-claude-code so bwrap binds over them instead of leaking stubs — see
+# ensureClaudeStubDirs() in src/adapters/claude-code.ts. These two are files,
+# not directories, so they can't be .gitkeep'd; ignore their launch-time stubs.
+.claude/launch.json
+.claude/scheduled_tasks.json

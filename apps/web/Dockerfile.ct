@@ -1,0 +1,21 @@
+# Playwright component-test image for @hangup/web.
+#
+# Build context is the repo ROOT (monorepo) so the pnpm workspace — including the
+# @hangup/shared dependency that web components import — installs correctly.
+# The container working directory ends at /app/apps/web.
+FROM mcr.microsoft.com/playwright:v1.61.0-jammy
+WORKDIR /app
+RUN npm install -g pnpm
+
+# Workspace manifests first (better layer caching).
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY apps/web/package.json ./apps/web/package.json
+COPY packages/shared/package.json ./packages/shared/package.json
+RUN pnpm install --frozen-lockfile
+
+# Sources (node_modules / .next / __snapshots__ excluded via .dockerignore;
+# snapshots + report are bind-mounted at run time).
+COPY packages/shared ./packages/shared
+COPY apps/web ./apps/web
+
+WORKDIR /app/apps/web

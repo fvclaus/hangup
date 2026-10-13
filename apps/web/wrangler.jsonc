@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hangup",
+  "account_id": "7c5d9e540ef519ce34ea280741de3fc9",
+  // Custom entry wraps the OpenNext worker to proxy /api/* with redirect:manual.
+  "main": "worker.ts",
+  "compatibility_date": "2025-04-01",
+  "compatibility_flags": [
+    // Node.js APIs used by Next/OpenNext at runtime.
+    "nodejs_compat",
+    // `fetch()` (the /api reverse-proxy to Cloud Run) hits the public internet
+    // rather than looping back into this Worker.
+    "global_fetch_strictly_public",
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  // Non-secret runtime config. The custom worker (worker.ts) reads API_ORIGIN at
+  // runtime to proxy /api/* to the Cloud Run backend.
+  "vars": {
+    // Public origin = this Worker (the no-meeting-overtime.click domain is gone).
+    "SITE_BASE": "https://hangup.f-v-claus.workers.dev",
+    "API_ORIGIN": "https://app-74317633731.europe-west1.run.app",
+  },
+}
