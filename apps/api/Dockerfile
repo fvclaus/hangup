@@ -14,6 +14,9 @@ COPY apps/api/package.json ./apps/api/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
 RUN pnpm install --frozen-lockfile --filter @hangup/api...
 COPY . .
+# Inlined into the bundle at build time; e2e builds pass 0 to allow short
+# meetings. Unset in production, which falls back to the default.
+ARG NEXT_PUBLIC_MEETING_END_MINUTES_OFFSET
 ENV NEXT_TELEMETRY_DISABLED=1
 # Placeholder env so module-level reads / prerender don't fail during build.
 ENV CLIENT_SECRET=foo \
@@ -28,7 +31,8 @@ FROM gcr.io/distroless/nodejs22-debian12 AS runtime
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
-    HOSTNAME=0.0.0.0
+    HOSTNAME=0.0.0.0 \
+    PORT=8080
 COPY --from=build /app/apps/api/.next/standalone ./
 COPY --from=build /app/apps/api/.next/static ./apps/api/.next/static
 USER nonroot
