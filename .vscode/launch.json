@@ -27,18 +27,11 @@
             "console": "integratedTerminal"
           },
           {
-            "name": "Run E2E --test-only",
-            "type": "node-terminal",
-            "request": "launch",
-            "envFile": "${workspaceFolder}/.env.local",
-            "command": "pnpm test:e2e:only"
-          },
-          {
             "name": "Run E2E",
             "type": "node-terminal",
             "request": "launch",
-            "envFile": "${workspaceFolder}/.env.local",
-            "command": "pnpm test:e2e"
+            "envFile": "${workspaceFolder}/apps/web/.env.local",
+            "command": "pnpm -C apps/web test:e2e"
           },
           {
             "name": "Run component tests",

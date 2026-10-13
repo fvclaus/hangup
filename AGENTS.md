@@ -69,25 +69,13 @@ This rebuilds the Docker image and runs Playwright with `--update-snapshots`, wr
 
 ### E2E tests
 
-Full setup required before running:
+Setup is described in README.md ("E2E Tests"). In short:
 
-1. **Chrome** — start with remote debugging and log in to Google:
-   ```bash
-   google-chrome-stable --user-data-dir=/path/to/.chrome-debugging-user-dir --remote-debugging-port=9222
-   ```
-2. **ngrok** — required for Cloud Tasks to call the DELETE endpoint on your local server:
-   ```bash
-   ngrok http 3000
-   ```
-   Set the forwarding URL in `.env.local`: `SITE_BASE_CLOUD_TASKS=https://xxxx.ngrok-free.app`
-3. **Dev server** — load env vars and start Next.js:
-   ```bash
-   set -a && source .env.local && set +a && pnpm dev
-   ```
-4. **Run tests**:
-   ```bash
-   GMAIL_USER=you@gmail.com pnpm test:e2e
-   ```
+1. **Chrome** with `--remote-debugging-port=9222`, logged in to the test Google account.
+2. **ngrok** to the backend: `ngrok http 3001`; its URL goes into `SITE_BASE_CLOUD_TASKS` in `apps/api/.env.local`.
+3. **Backend** on port 3001 (`pnpm -C apps/api dev`, or the Docker image built with `--build-arg NEXT_PUBLIC_MEETING_END_MINUTES_OFFSET=0`).
+4. **Web app** on port 3000 (`pnpm -C apps/web dev`) with `NEXT_PUBLIC_MEETING_END_MINUTES_OFFSET=0` in `apps/web/.env.local`.
+5. **Run**: `GMAIL_USER=you@gmail.com pnpm -C apps/web test:e2e`
 
 `GMAIL_USER` is required when multiple Google accounts are signed in.
 
