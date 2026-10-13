@@ -209,7 +209,7 @@ resource "google_project_service" "containerregistry_googleapis_com" {
 
 import {
   to = google_project_service.containerregistry_googleapis_com
-  id = "no-meeting-overtime/containerregistry.googleapis.com"
+  id = "${var.project}/containerregistry.googleapis.com"
 }
 
 resource "google_project_service" "run_googleapis_com" {

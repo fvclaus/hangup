@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
       picture,
     });
   } catch (error) {
-    logger.error(error, { additional: credentials });
+    logger.error(error, { userId: userInfoResponse.sub });
     throw new Error(
       "This shouldn't happen. Token should be valid at this point.",
       { cause: error },
