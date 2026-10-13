@@ -200,6 +200,18 @@ resource "google_project_service" "firestore_googleapis_com" {
 resource "google_project_service" "artifactregistry_googleapis_com" {
   service = "artifactregistry.googleapis.com"
 }
+# Container Registry is unused (images live in Artifact Registry). It is
+# imported so that removing this resource in a follow-up apply disables it.
+resource "google_project_service" "containerregistry_googleapis_com" {
+  service            = "containerregistry.googleapis.com"
+  disable_on_destroy = true
+}
+
+import {
+  to = google_project_service.containerregistry_googleapis_com
+  id = "no-meeting-overtime/containerregistry.googleapis.com"
+}
+
 resource "google_project_service" "run_googleapis_com" {
   service = "run.googleapis.com"
 }

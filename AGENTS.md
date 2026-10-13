@@ -7,11 +7,11 @@ A Next.js web app that lets users schedule an automatic end time for Google Meet
 ## Architecture
 
 - **Framework**: Next.js (App Router, standalone output mode)
-- **Auth**: Google OAuth2 via `googleapis`. Session state stored in Firestore (`meetings` database, `session` collection).
+- **Auth**: Google OAuth2 via `google-auth-library`. Session state stored in Firestore (`meetings` database, `session` collection).
 - **Database**: Firestore (`meetings` database) — stores sessions, meetings, and users.
 - **Scheduling**: Google Cloud Tasks queue (`end-meetings1`) sends an HTTP DELETE to `/api/meeting/[meetingCode]` with an OIDC token at the scheduled end time.
-- **Hosting**: Cloud Run (europe-west1), built and deployed via Cloud Build (`cloudbuild.yaml`).
-- **Container**: Multi-stage Docker build using a distroless Node.js image. Uses Next.js standalone output (`next.config.js` must include `output: 'standalone'`).
+- **Hosting**: Cloud Run (europe-west1), built and deployed by the Deploy workflow (`.github/workflows/deploy.yml`).
+- **Container**: Multi-stage Docker build using a distroless Node.js image. Uses Next.js standalone output (`apps/api/next.config.js` must include `output: 'standalone'`).
 
 ## Key environment variables (set in Cloud Run)
 
@@ -47,7 +47,6 @@ The route handler logic is importable; prefer calling it directly from server co
 
 - **CI** (`.github/workflows/ci.yml`): runs lint, unit tests, and Playwright component tests on every PR/push to `main`. Does not deploy. Note: CI does **not** run `next build`, so type errors / build breakages are only caught by the Deploy workflow.
 - **Deploy** (`.github/workflows/deploy.yml`): on push to `main` (and temporarily on `pull_request` while the pipeline is being validated), authenticates to GCP via Workload Identity Federation (impersonating the `cloud-build` service account), builds the Docker image, pushes it to Artifact Registry (`europe-west1-docker.pkg.dev/.../repo`), and deploys to Cloud Run (`app`, europe-west1). Non-secret env vars come from GitHub repo **variables**; `CLIENT_SECRET` is injected from Secret Manager (`client-secret`) via `--set-secrets`. IAM wiring lives in `github_actions.tf`.
-- **Cloud Build** (`cloudbuild.yaml`): legacy manual deploy path, superseded by the Deploy workflow.
 
 ## Testing
 

@@ -164,5 +164,3 @@ terraform can be installed from snap
 `storage: object doesn't exist`? -> `gcloud auth application-default set-quota-project no-meeting-overtime`
 
 `oauth2: "invalid_grant" "Token has been expired or revoked."`? -> `gcloud auth application-default login`
-
-`failed precondition: due to quota restrictions, cannot run builds in this region, see https://cloud.google.com/build/docs/locations#restricted_regions_for_some_projects ` when building. Go to Quota > Cloud Build API > Concurrent Build CPUs (Regional Public Pool) per region per build_origin and request a value > 0
