@@ -1,5 +1,5 @@
 import { AuthenticatedUserInfo } from "@hangup/shared";
-import { getSession, setSession } from "@/app/session-store";
+import { getSession, replaceAuthorizedSession } from "@/app/session-store";
 import { NextResponse } from "next/server";
 import { updateUserInfo } from "../updateUserInfo";
 import { getMissingScopes } from "@/shared/server_constants";
@@ -11,15 +11,17 @@ const logger = new Logger("userinfo");
 export async function GET(): Promise<Response> {
   const sessionData = await getSession();
 
+  const unauthenticated = NextResponse.json({
+    authenticated: false,
+    hasAcceptedPrivacyPolicy: false,
+  });
+
   if (
     sessionData === undefined ||
     !sessionData.hasAcceptedPrivacyPolicy ||
     "state" in sessionData
   ) {
-    return NextResponse.json({
-      authenticated: false,
-      hasAcceptedPrivacyPolicy: false,
-    });
+    return unauthenticated;
   }
 
   // TODO Return from session, if 'expired' is not expired.
@@ -32,7 +34,10 @@ export async function GET(): Promise<Response> {
       ...newUserInfo,
     };
 
-    await setSession(newSessionData);
+    if (!(await replaceAuthorizedSession(sessionData.userId, newSessionData))) {
+      // A sign-in started meanwhile and owns the session now.
+      return unauthenticated;
+    }
 
     const userInfo: AuthenticatedUserInfo & { missingScopes: string[] } = {
       authenticated: true,
@@ -57,7 +62,7 @@ export async function GET(): Promise<Response> {
     ) {
       if (error.message === "invalid_grant" || error.status === 401) {
         // TODO Reset to new sessions
-        await setSession({
+        await replaceAuthorizedSession(sessionData.userId, {
           hasAcceptedPrivacyPolicy: false,
         });
         logger.debug("Tokens expired or revoked", {

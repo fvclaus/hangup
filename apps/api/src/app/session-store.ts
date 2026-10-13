@@ -107,6 +107,33 @@ export async function setSession(session: SessionData): Promise<void> {
   await _set(sessionId, session);
 }
 
+/**
+ * Replaces the session with `data` only if it is still the authorized session
+ * of `userId`. A sign-in that started while the caller was waiting on Google
+ * has replaced it with a DuringAuthorizationSession; that write must win, or
+ * get-token loses its OAuth state. Returns whether the session was written.
+ */
+export async function replaceAuthorizedSession(
+  userId: string,
+  data: SessionData,
+): Promise<boolean> {
+  const sessionId = await getSessionId();
+  if (!sessionId) {
+    return false;
+  }
+  const ref = db.collection("session").doc(sessionId);
+  return db.runTransaction(async (transaction) => {
+    const current = (await transaction.get(ref)).data() as
+      | SessionData
+      | undefined;
+    if (!isAuthorizedSession(current) || current.userId !== userId) {
+      return false;
+    }
+    transaction.set(ref, data);
+    return true;
+  });
+}
+
 export async function deleteSession(): Promise<void> {
   const sessionId = await getSessionId();
   if (sessionId) {
