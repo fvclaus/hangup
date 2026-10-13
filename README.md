@@ -1,6 +1,6 @@
 # No Meeting Overtime
 
-https://no-meeting-overtime.click
+https://hangup.f-v-claus.workers.dev/
 
 ![Website screenshot](docs/website_screenshot.png)
 

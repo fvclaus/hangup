@@ -10,7 +10,9 @@
     },
     "network": {
       "allowedDomains": [
-        "photomap-production-738074687639.europe-west1.run.app"
+        "photomap-production-738074687639.europe-west1.run.app",
+        "api.github.com",
+        "github.com"
       ]
     }
   },
