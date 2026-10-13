@@ -4,7 +4,7 @@
 /* eslint-disable new-cap */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as handler from "./route";
-import { google } from "googleapis";
+import { meet } from "@googleapis/meet";
 import { NextRequest, NextResponse } from "next/server";
 import { add, formatISO } from "date-fns";
 import { saveMeeting } from "@/app/firestore";
@@ -20,7 +20,7 @@ describe("/api/meeting/[meetingCode]", () => {
     vi.resetAllMocks();
     vi.mock("./../../session-store");
     vi.mock("./../../firestore");
-    vi.mock("googleapis");
+    vi.mock("@googleapis/meet");
     vi.mock("@google-cloud/tasks", () => {
       // This is necessary, but I don't understand why the mocking in the test doesn't work without it.
       // eslint-disable-next-line no-shadow
@@ -98,7 +98,7 @@ describe("/api/meeting/[meetingCode]", () => {
     });
 
     it("should return 500 if meeting creation fails", async () => {
-      vi.mocked(google.meet).mockReturnValue({
+      vi.mocked(meet).mockReturnValue({
         spaces: {
           create: vi.fn().mockRejectedValue(new Error("Google API error")),
         },
@@ -118,7 +118,7 @@ describe("/api/meeting/[meetingCode]", () => {
     });
 
     it("should create a meeting and return the meeting data", async () => {
-      vi.mocked(google.meet).mockReturnValue({
+      vi.mocked(meet).mockReturnValue({
         spaces: {
           create: vi.fn().mockResolvedValue({
             data: {

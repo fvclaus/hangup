@@ -3,7 +3,7 @@ import {
   SITE_BASE,
   createOauth2Client,
 } from "@/shared/server_constants";
-import { google } from "googleapis";
+import { meet } from "@googleapis/meet";
 import { NextRequest, NextResponse } from "next/server";
 import { findMeeting, findUser } from "../../../firestore";
 import { getSession, isAuthorizedSession } from "@/app/session-store";
@@ -116,7 +116,7 @@ export async function DELETE(req: NextRequest, props: { params: RouteParams }) {
   }
 
   try {
-    const response = await google.meet("v2").spaces.endActiveConference({
+    const response = await meet("v2").spaces.endActiveConference({
       name: meeting.name,
       auth: oauth2Client,
     });
