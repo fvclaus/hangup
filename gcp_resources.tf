@@ -138,15 +138,25 @@ resource "google_project_iam_member" "app_end-meetings_queue_binding" {
   depends_on = [google_cloud_tasks_queue.end_meetings]
 }
 
-resource "google_service_account_iam_binding" "allow_act_as" {
+resource "google_service_account_iam_member" "allow_act_as" {
   service_account_id = google_service_account.app.id
   role               = "roles/iam.serviceAccountUser"
 
   #TODO Create dedicated account
-  members = [
-    "serviceAccount:${google_service_account.app.email}"
-  ]
+  member = "serviceAccount:${google_service_account.app.email}"
+}
 
+removed {
+  from = google_service_account_iam_binding.allow_act_as
+
+  lifecycle {
+    destroy = false
+  }
+}
+
+import {
+  to = google_service_account_iam_member.allow_act_as
+  id = "projects/no-meeting-overtime/serviceAccounts/backend-app@no-meeting-overtime.iam.gserviceaccount.com roles/iam.serviceAccountUser serviceAccount:backend-app@no-meeting-overtime.iam.gserviceaccount.com"
 }
 
 resource "google_project_service" "iam_googleapis_com" {

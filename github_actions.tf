@@ -7,7 +7,7 @@
 # build, push and deploy.
 
 locals {
-  github_repo = "fvclaus/no-meeting-overtime"
+  github_repo = "fvclaus/hangup"
   # WIF principal for this repo. The shared provider maps google.subject to
   # assertion.repository, so the subject is the "<owner>/<repo>" slug.
   github_principal = "principal://iam.googleapis.com/projects/44054328514/locations/global/workloadIdentityPools/github/subject/${local.github_repo}"
