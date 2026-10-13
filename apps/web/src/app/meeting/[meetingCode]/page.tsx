@@ -17,7 +17,7 @@ export default function Page() {
 
   useEffect(() => {
     if (!userInfo) {
-      return;
+      return undefined;
     }
     let cancelled = false;
     void fetch(`/api/meeting/${meetingCode}`, { credentials: "same-origin" })
