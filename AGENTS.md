@@ -46,7 +46,8 @@ The route handler logic is importable; prefer calling it directly from server co
 ## CI/CD
 
 - **CI** (`.github/workflows/ci.yml`): runs lint, unit tests, and Playwright component tests on every PR/push to `main`. Does not deploy. Note: CI does **not** run `next build`, so type errors / build breakages are only caught by the Deploy workflow.
-- **Deploy** (`.github/workflows/deploy.yml`): on push to `main` (and temporarily on `pull_request` while the pipeline is being validated), authenticates to GCP via Workload Identity Federation (impersonating the `cloud-build` service account), builds the Docker image, pushes it to Artifact Registry (`europe-west1-docker.pkg.dev/.../repo`), and deploys to Cloud Run (`app`, europe-west1). Non-secret env vars come from GitHub repo **variables**; `CLIENT_SECRET` is injected from Secret Manager (`client-secret`) via `--set-secrets`. IAM wiring lives in `github_actions.tf`.
+- **Deploy** (`.github/workflows/deploy.yml`): on push to `main` (and temporarily on `pull_request` while the pipeline is being validated), authenticates to GCP via Workload Identity Federation (impersonating the `cloud-build` service account), builds the Docker image, pushes it to Artifact Registry (`europe-west1-docker.pkg.dev/.../repo`), and deploys to Cloud Run (`app`, europe-west1). Non-secret env vars come from GitHub repo **variables**; `CLIENT_SECRET` is injected from Secret Manager (`client-secret`) via `--set-secrets`. IAM wiring lives in `terraform/github_actions.tf`.
+- **Infrastructure**: all GCP resources are Terraform in `terraform/`; run it with `terraform/tf.sh plan|apply`.
 
 ## Testing
 

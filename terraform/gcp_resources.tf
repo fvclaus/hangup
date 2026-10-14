@@ -8,21 +8,23 @@ terraform {
 
 
 variable "project" {
-  type = string
+  type    = string
+  default = "no-meeting-overtime"
 }
 
-#variable "credentials_file" { }
-
 variable "region" {
-  type = string
+  type    = string
+  default = "europe-west1"
 }
 
 variable "firestore_region" {
-  type = string
+  type    = string
+  default = "eur3"
 }
 
 variable "tasks_region" {
-  type = string
+  type    = string
+  default = "europe-west1"
 }
 
 

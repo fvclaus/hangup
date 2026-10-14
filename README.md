@@ -155,11 +155,19 @@ GMAIL_USER=you@gmail.com pnpm -C apps/web test:e2e
 > **Note:** The VS Code Playwright extension requires the same Chrome and ngrok setup as the CLI — it does not start Chrome or the dev server for you.
 
 
-Don't install glcoud from snap. You won't let you install the terraform extension
-terraform can be installed from snap
+## Infrastructure (Terraform)
 
+All GCP resources are defined in `terraform/`; the state lives in a GCS bucket (`terraform/backend.tf`). `terraform/tf.sh` runs Terraform from any directory, initializes it and checks for credentials first:
 
-`terraform plan`
+```bash
+gcloud auth application-default login   # or export GOOGLE_OAUTH_ACCESS_TOKEN
+terraform/tf.sh plan
+terraform/tf.sh apply
+```
+
+Install gcloud natively, not from snap: the snap cannot install the Terraform extension.
+
+Troubleshooting:
 
 `storage: object doesn't exist`? -> `gcloud auth application-default set-quota-project no-meeting-overtime`
 
