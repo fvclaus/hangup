@@ -14,6 +14,9 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 type NextLinkArgs = Parameters<typeof Link>;
 
+const MENU_ITEM_CLASS_NAME =
+  "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100";
+
 const userMenuLinkFactory = (setUserMenuVisible: (value: boolean) => void) =>
   React.forwardRef<HTMLAnchorElement, NextLinkArgs[0]>(
     ({ className, ...props }, ref) => {
@@ -26,10 +29,7 @@ const userMenuLinkFactory = (setUserMenuVisible: (value: boolean) => void) =>
           prefetch={false}
           ref={ref}
           {...props}
-          className={cn(
-            className,
-            "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100",
-          )}
+          className={cn(className, MENU_ITEM_CLASS_NAME)}
         />
       );
     },
@@ -82,7 +82,11 @@ export default function UserMenu({
         </div>
         {/* TODO Add Icons? */}
         <div className="py-1">
-          <UserMenuLink href={LOGOUT_URL}>Logout</UserMenuLink>
+          {/* A full page load, so the auth state is fetched again after the
+              session is deleted. */}
+          <a role="menuitem" href={LOGOUT_URL} className={MENU_ITEM_CLASS_NAME}>
+            Logout
+          </a>
         </div>
         {/* Add Switch Account options */}
       </div>

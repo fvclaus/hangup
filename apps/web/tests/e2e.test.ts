@@ -39,7 +39,7 @@ test.describe("test", () => {
   // eslint-disable-next-line init-declarations
   let userMenuButton: Locator;
   // eslint-disable-next-line init-declarations
-  let getStartedButton: Locator;
+  let getStartedLink: Locator;
 
   async function revokeGoogleSignIn() {
     await page.goto("https://myaccount.google.com/connections");
@@ -159,14 +159,37 @@ test.describe("test", () => {
       .catch(() => {});
   }
 
+  // The landing renders as signed out until /api/userinfo answers, so wait for
+  // it before reading the auth state off the page.
+  async function waitForUserInfo(navigate: () => Promise<unknown>) {
+    const userInfoLoaded = page.waitForResponse((response) =>
+      response.url().endsWith("/api/userinfo"),
+    );
+    await navigate();
+    await userInfoLoaded;
+  }
+
+  async function gotoLanding() {
+    await waitForUserInfo(() => page.goto("http://localhost:3000"));
+  }
+
   async function signInIfNecessary() {
-    await expect(signInWithGoogleButton.or(getStartedButton)).toBeVisible();
+    await expect(signInWithGoogleButton.or(getStartedLink)).toBeVisible();
     if (await signInWithGoogleButton.isVisible()) {
+      const acceptPrivacyPolicyCheckbox = page.getByRole("checkbox", {
+        name: "By clicking Sign In With Google I have read and agree to",
+      });
+      if (
+        (await acceptPrivacyPolicyCheckbox.isVisible()) &&
+        !(await acceptPrivacyPolicyCheckbox.isChecked())
+      ) {
+        await acceptPrivacyPolicyCheckbox.check();
+      }
       await signInWithGoogleButton.click();
       await signInWithGoogle();
       await expect(createMeetingButton).toBeVisible();
     } else {
-      await getStartedButton.click();
+      await getStartedLink.click();
     }
   }
 
@@ -183,7 +206,7 @@ test.describe("test", () => {
     });
     createMeetingButton = page.getByRole("button", { name: "Create Meeting" });
     userMenuButton = page.getByRole("button", { name: "User Menu" });
-    getStartedButton = page.getByRole("button", { name: "Get started" });
+    getStartedLink = page.getByRole("link", { name: /Get started/u });
   });
 
   test.afterEach(async () => {
@@ -194,7 +217,7 @@ test.describe("test", () => {
   });
 
   test("happy path", async () => {
-    await page.goto("http://localhost:3000");
+    await gotoLanding();
     await signInIfNecessary();
     const shortMeetingEnd = addSeconds(Date.now(), 30);
 
@@ -213,17 +236,18 @@ test.describe("test", () => {
     await page.goto(`http://localhost:3000/meeting/${body.meetingCode}`);
     const successText = page.getByText(/Meeting with code .* created/u);
     await expect(successText).toBeVisible({ timeout: 45_000 });
-    const pagePromise = page
-      .context()
-      .waitForEvent("page", (p) =>
-        p.url().startsWith("https://meet.google.com/"),
-      );
+    // The popup opens as about:blank and navigates to Meet afterwards, so
+    // wait for the page first and its Meet URL second.
+    const pagePromise = page.context().waitForEvent("page");
     await page.getByRole("link", { name: "Join now" }).click();
     const newPage = await pagePromise;
+    await newPage.waitForURL(/^https:\/\/meet\.google\.com\//u);
     await newPage.bringToFront();
+    // Meet shows the first heading inside the call and the second one on the
+    // "Ready to join?" screen; either means the conference was ended.
     await expect(
       newPage.getByRole("heading", {
-        name: "Your host ended the meeting for everyone",
+        name: /^(?:Your host ended the meeting for everyone|This meeting has already ended)$/u,
       }),
     ).toBeVisible({
       timeout: (differenceInSeconds(shortMeetingEnd, new Date()) + 10) * 1000,
@@ -232,11 +256,11 @@ test.describe("test", () => {
 
   test("test accept privacy policy", async () => {
     await context.clearCookies({ name: SESSION_ID_NAME });
-    await page.goto("http://localhost:3000");
+    await gotoLanding();
     await page.evaluate(() => {
       localStorage.clear();
     });
-    await page.reload();
+    await waitForUserInfo(() => page.reload());
     const acceptPrivacyPolicyCheckbox = page.getByRole("checkbox", {
       name: "By clicking Sign In With Google I have read and agree to",
     });
@@ -256,16 +280,16 @@ test.describe("test", () => {
   });
 
   test("should display login button after removing connection to app", async () => {
-    await page.goto("http://localhost:3000");
+    await gotoLanding();
     await signInIfNecessary();
     await revokeGoogleSignIn();
-    await page.goto("http://localhost:3000");
+    await gotoLanding();
     await expect(signInWithGoogleButton).toBeVisible();
   });
 
   test("should display missing scopes", async () => {
     await revokeGoogleSignIn();
-    await page.goto("http://localhost:3000");
+    await gotoLanding();
     await signInWithGoogleButton.click();
     await signInWithGoogle([]);
     await expect(signInWithGoogleButton).toBeVisible();
@@ -277,7 +301,7 @@ test.describe("test", () => {
   });
 
   test("should show created meetings and delete account", async () => {
-    await page.goto("http://localhost:3000");
+    await gotoLanding();
     await signInIfNecessary();
     const meetingEnd = roundToNearestMinutes(addMinutes(Date.now(), 20), {
       roundingMethod: "ceil",

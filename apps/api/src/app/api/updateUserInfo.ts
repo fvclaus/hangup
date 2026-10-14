@@ -1,6 +1,6 @@
 import { Credentials } from "@/app/session-store";
 import { createOauth2Client } from "@/shared/server_constants";
-import { google } from "googleapis";
+import { oauth2 } from "@googleapis/oauth2";
 
 export async function updateUserInfo(
   inputCredentials: Credentials,
@@ -8,7 +8,7 @@ export async function updateUserInfo(
   const oauth2Client = createOauth2Client();
   oauth2Client.setCredentials(inputCredentials);
 
-  const response = await google.oauth2("v2").userinfo.get({
+  const response = await oauth2("v2").userinfo.get({
     auth: oauth2Client,
   });
 

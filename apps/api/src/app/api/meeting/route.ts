@@ -16,7 +16,7 @@ import {
   SITE_BASE_CLOUD_TASKS,
   cloudTasksClient,
 } from "@/shared/server_constants";
-import { google } from "googleapis";
+import { meet } from "@googleapis/meet";
 
 import { differenceInSeconds, formatISO } from "date-fns";
 import { NextRequest, NextResponse } from "next/server";
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
   const oauthClient = getCredentials(sessionData.credentials);
 
   try {
-    const space = await google.meet("v2").spaces.create({
+    const space = await meet("v2").spaces.create({
         auth: oauthClient,
       }),
       meeting: Meeting = {

@@ -7,11 +7,11 @@ A Next.js web app that lets users schedule an automatic end time for Google Meet
 ## Architecture
 
 - **Framework**: Next.js (App Router, standalone output mode)
-- **Auth**: Google OAuth2 via `googleapis`. Session state stored in Firestore (`meetings` database, `session` collection).
+- **Auth**: Google OAuth2 via `google-auth-library`. Session state stored in Firestore (`meetings` database, `session` collection).
 - **Database**: Firestore (`meetings` database) — stores sessions, meetings, and users.
 - **Scheduling**: Google Cloud Tasks queue (`end-meetings1`) sends an HTTP DELETE to `/api/meeting/[meetingCode]` with an OIDC token at the scheduled end time.
-- **Hosting**: Cloud Run (europe-west1), built and deployed via Cloud Build (`cloudbuild.yaml`).
-- **Container**: Multi-stage Docker build using a distroless Node.js image. Uses Next.js standalone output (`next.config.js` must include `output: 'standalone'`).
+- **Hosting**: Cloud Run (europe-west1), built and deployed by the Deploy workflow (`.github/workflows/deploy.yml`).
+- **Container**: Multi-stage Docker build using a distroless Node.js image. Uses Next.js standalone output (`apps/api/next.config.js` must include `output: 'standalone'`).
 
 ## Key environment variables (set in Cloud Run)
 
@@ -46,8 +46,8 @@ The route handler logic is importable; prefer calling it directly from server co
 ## CI/CD
 
 - **CI** (`.github/workflows/ci.yml`): runs lint, unit tests, and Playwright component tests on every PR/push to `main`. Does not deploy. Note: CI does **not** run `next build`, so type errors / build breakages are only caught by the Deploy workflow.
-- **Deploy** (`.github/workflows/deploy.yml`): on push to `main` (and temporarily on `pull_request` while the pipeline is being validated), authenticates to GCP via Workload Identity Federation (impersonating the `cloud-build` service account), builds the Docker image, pushes it to Artifact Registry (`europe-west1-docker.pkg.dev/.../repo`), and deploys to Cloud Run (`app`, europe-west1). Non-secret env vars come from GitHub repo **variables**; `CLIENT_SECRET` is injected from Secret Manager (`client-secret`) via `--set-secrets`. IAM wiring lives in `github_actions.tf`.
-- **Cloud Build** (`cloudbuild.yaml`): legacy manual deploy path, superseded by the Deploy workflow.
+- **Deploy** (`.github/workflows/deploy.yml`): on push to `main` (and temporarily on `pull_request` while the pipeline is being validated), authenticates to GCP via Workload Identity Federation (impersonating the `cloud-build` service account), builds the Docker image, pushes it to Artifact Registry (`europe-west1-docker.pkg.dev/.../repo`), and deploys to Cloud Run (`app`, europe-west1). Non-secret env vars come from GitHub repo **variables**; `CLIENT_SECRET` is injected from Secret Manager (`client-secret`) via `--set-secrets`. IAM wiring lives in `terraform/github_actions.tf`.
+- **Infrastructure**: all GCP resources are Terraform in `terraform/`; run it with `terraform/tf.sh plan|apply`.
 
 ## Testing
 
@@ -69,25 +69,13 @@ This rebuilds the Docker image and runs Playwright with `--update-snapshots`, wr
 
 ### E2E tests
 
-Full setup required before running:
+Setup is described in README.md ("E2E Tests"). In short:
 
-1. **Chrome** — start with remote debugging and log in to Google:
-   ```bash
-   google-chrome-stable --user-data-dir=/path/to/.chrome-debugging-user-dir --remote-debugging-port=9222
-   ```
-2. **ngrok** — required for Cloud Tasks to call the DELETE endpoint on your local server:
-   ```bash
-   ngrok http 3000
-   ```
-   Set the forwarding URL in `.env.local`: `SITE_BASE_CLOUD_TASKS=https://xxxx.ngrok-free.app`
-3. **Dev server** — load env vars and start Next.js:
-   ```bash
-   set -a && source .env.local && set +a && pnpm dev
-   ```
-4. **Run tests**:
-   ```bash
-   GMAIL_USER=you@gmail.com pnpm test:e2e
-   ```
+1. **Chrome** with `--remote-debugging-port=9222`, logged in to the test Google account.
+2. **ngrok** to the backend: `ngrok http 3001`; its URL goes into `SITE_BASE_CLOUD_TASKS` in `apps/api/.env.local`.
+3. **Backend** on port 3001 (`pnpm -C apps/api dev`, or the Docker image built with `--build-arg NEXT_PUBLIC_MEETING_END_MINUTES_OFFSET=0`).
+4. **Web app** on port 3000 (`pnpm -C apps/web dev`) with `NEXT_PUBLIC_MEETING_END_MINUTES_OFFSET=0` in `apps/web/.env.local`.
+5. **Run**: `GMAIL_USER=you@gmail.com pnpm -C apps/web test:e2e`
 
 `GMAIL_USER` is required when multiple Google accounts are signed in.
 

@@ -6,7 +6,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as handler from "./route";
 import { findMeeting, findUser } from "../../../firestore";
 import { getSession } from "@/app/session-store";
-import { google } from "googleapis";
+import { meet } from "@googleapis/meet";
+import { OAuth2Client } from "google-auth-library";
 import { NextRequest } from "next/server";
 import {
   authenticatedSession,
@@ -17,7 +18,8 @@ describe("/api/meeting/[meetingCode]", () => {
   beforeEach(() => {
     vi.mock("./../../../firestore");
     vi.mock("./../../../session-store");
-    vi.mock("googleapis");
+    vi.mock("@googleapis/meet");
+    vi.mock("google-auth-library");
     vi.resetAllMocks();
     const findMeetingMock: typeof findMeeting = async (params) => {
       const { meetingCode } = await params;
@@ -107,7 +109,7 @@ describe("/api/meeting/[meetingCode]", () => {
         }
       });
 
-      vi.mocked(google.auth.OAuth2.prototype.verifyIdToken).mockImplementation(
+      vi.mocked(OAuth2Client.prototype.verifyIdToken).mockImplementation(
         ({ idToken }: { idToken: string }) => {
           switch (idToken) {
             case "invalid_token": {
@@ -139,7 +141,7 @@ describe("/api/meeting/[meetingCode]", () => {
       const endActiveConferenceMock = vi
         .fn()
         .mockResolvedValue({ status: 200 });
-      vi.mocked(google.meet).mockReturnValue({
+      vi.mocked(meet).mockReturnValue({
         spaces: {
           endActiveConference: endActiveConferenceMock,
         },
@@ -231,7 +233,7 @@ describe("/api/meeting/[meetingCode]", () => {
       });
       expect(vi.mocked(findMeeting)).toHaveBeenCalledOnce();
       expect(
-        vi.mocked(google.meet("v2").spaces.endActiveConference),
+        vi.mocked(meet("v2").spaces.endActiveConference),
       ).toHaveBeenCalledTimes(0);
       expect(response.status).toBe(204);
     });
@@ -241,13 +243,13 @@ describe("/api/meeting/[meetingCode]", () => {
         params: Promise.resolve({ meetingCode: "existingMeeting" }),
       });
       expect(
-        vi.mocked(google.meet("v2").spaces.endActiveConference),
+        vi.mocked(meet("v2").spaces.endActiveConference),
       ).toHaveBeenCalledOnce();
       expect(response.status).toBe(200);
     });
 
     it("should ignore deleted or permission denied from endActiveConference", async () => {
-      vi.mocked(google.meet).mockReturnValue({
+      vi.mocked(meet).mockReturnValue({
         spaces: {
           endActiveConference: vi.fn().mockRejectedValue({ status: 403 }),
         },
@@ -257,13 +259,13 @@ describe("/api/meeting/[meetingCode]", () => {
         params: Promise.resolve({ meetingCode: "existingMeeting" }),
       });
       expect(
-        vi.mocked(google.meet("v2").spaces.endActiveConference),
+        vi.mocked(meet("v2").spaces.endActiveConference),
       ).toHaveBeenCalledOnce();
       expect(response.status).toBe(204);
     });
 
     it("should pass through other errors from endActiveConference", async () => {
-      vi.mocked(google.meet).mockReturnValue({
+      vi.mocked(meet).mockReturnValue({
         spaces: {
           endActiveConference: vi.fn().mockRejectedValue({ status: 502 }),
         },
@@ -273,12 +275,12 @@ describe("/api/meeting/[meetingCode]", () => {
         params: Promise.resolve({ meetingCode: "existingMeeting" }),
       });
       expect(
-        vi.mocked(google.meet("v2").spaces.endActiveConference),
+        vi.mocked(meet("v2").spaces.endActiveConference),
       ).toHaveBeenCalledOnce();
       expect(response.status).toBe(502);
     });
     it("should pass through other errors as 500", async () => {
-      vi.mocked(google.meet).mockReturnValue({
+      vi.mocked(meet).mockReturnValue({
         spaces: {
           endActiveConference: vi.fn().mockRejectedValue("my Error"),
         },
@@ -288,7 +290,7 @@ describe("/api/meeting/[meetingCode]", () => {
         params: Promise.resolve({ meetingCode: "existingMeeting" }),
       });
       expect(
-        vi.mocked(google.meet("v2").spaces.endActiveConference),
+        vi.mocked(meet("v2").spaces.endActiveConference),
       ).toHaveBeenCalledOnce();
       expect(response.status).toBe(500);
     });

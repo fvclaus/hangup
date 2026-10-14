@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { google } from "googleapis";
 import { START_MEETING_PATH } from "@hangup/shared";
 import { Firestore } from "@google-cloud/firestore";
 import { CloudTasksClient } from "@google-cloud/tasks";
@@ -65,7 +64,7 @@ export function getMissingScopes(scopes: string): string[] {
 
 // Holds tokens of a user. That's why we need to create a new instance for everyone
 export const createOauth2Client = () =>
-  new google.auth.OAuth2(
+  new OAuth2Client(
     CLIENT_ID,
     CLIENT_SECRET,
     // TODO Necessary?

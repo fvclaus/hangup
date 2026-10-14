@@ -27,15 +27,15 @@ export async function GET(req: NextRequest) {
   }
 
   if (!("state" in session) || typeof session.state === "undefined") {
-    logger.error("Could not find state in session", { session });
+    logger.error("Could not find state in session");
     return new NextResponse("Could not find state in session", { status: 400 });
   }
 
   const state = req.nextUrl.searchParams.get("state");
 
   if (state !== session.state) {
-    const errorMsg = `Stored state ${session.state} does not match received state ${state}`;
-    logger.error(errorMsg, { session });
+    const errorMsg = "Stored state does not match received state";
+    logger.error(errorMsg);
     return new NextResponse(errorMsg, { status: 400 });
   }
 
@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
       picture,
     });
   } catch (error) {
-    logger.error(error, { additional: credentials });
+    logger.error(error, { userId: userInfoResponse.sub });
     throw new Error(
       "This shouldn't happen. Token should be valid at this point.",
       { cause: error },

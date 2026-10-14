@@ -8,21 +8,23 @@ terraform {
 
 
 variable "project" {
-  type = string
+  type    = string
+  default = "no-meeting-overtime"
 }
 
-#variable "credentials_file" { }
-
 variable "region" {
-  type = string
+  type    = string
+  default = "europe-west1"
 }
 
 variable "firestore_region" {
-  type = string
+  type    = string
+  default = "eur3"
 }
 
 variable "tasks_region" {
-  type = string
+  type    = string
+  default = "europe-west1"
 }
 
 
@@ -71,6 +73,24 @@ resource "google_artifact_registry_repository" "cloud_run_source_deploy" {
   location      = var.region
   mode          = "STANDARD_REPOSITORY"
   repository_id = "repo"
+
+  # Keep only the image Cloud Run is serving; Cloud Run re-pulls it on every
+  # instance start, so keep_count must never drop below 1.
+  cleanup_policy_dry_run = false
+  cleanup_policies {
+    id     = "keep-latest"
+    action = "KEEP"
+    most_recent_versions {
+      keep_count = 1
+    }
+  }
+  cleanup_policies {
+    id     = "delete-rest"
+    action = "DELETE"
+    condition {
+      tag_state = "ANY"
+    }
+  }
 
   depends_on = [google_project_service.artifactregistry_googleapis_com]
 }
@@ -129,7 +149,7 @@ resource "google_project_iam_member" "app_firestore_binding" {
 resource "google_project_iam_member" "app_end-meetings_queue_binding" {
   member = "serviceAccount:${google_service_account.app.email}"
   # TODO enqueuer roles give permisson denied
-  role   = "roles/cloudtasks.admin"
+  role = "roles/cloudtasks.admin"
   condition {
     expression = "resource.name==\"projects/${var.project}/locations/${var.tasks_region}/queues/end-meetings1\""
     title      = "Limit access to one resource"
@@ -182,6 +202,18 @@ resource "google_project_service" "firestore_googleapis_com" {
 resource "google_project_service" "artifactregistry_googleapis_com" {
   service = "artifactregistry.googleapis.com"
 }
+# Container Registry is unused (images live in Artifact Registry). It is
+# imported so that removing this resource in a follow-up apply disables it.
+resource "google_project_service" "containerregistry_googleapis_com" {
+  service            = "containerregistry.googleapis.com"
+  disable_on_destroy = true
+}
+
+import {
+  to = google_project_service.containerregistry_googleapis_com
+  id = "${var.project}/containerregistry.googleapis.com"
+}
+
 resource "google_project_service" "run_googleapis_com" {
   service = "run.googleapis.com"
 }

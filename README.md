@@ -76,77 +76,99 @@ To get the project running locally for development, follow these steps:
 
 ## E2E Tests
 
-E2E tests connect to a real Chrome browser via the Chrome DevTools Protocol (CDP) and require an active Google login, because automated login is blocked by 2FA.
+E2E tests drive a real Chrome browser via the Chrome DevTools Protocol (CDP) and need an active Google login, because automated login is blocked by 2FA. They run against the local web app (`apps/web`, port 3000), which forwards `/api/*` to the backend (`apps/api`, port 3001). The backend uses the real Firestore database and Cloud Tasks queue of the project.
 
 ### 1. Start Chrome with remote debugging
 
-Make sure no Chrome instance is running first (the command will silently attach to an existing one otherwise):
+Close all Chrome windows first (otherwise the command attaches to the running instance and no debugging port is opened):
 
 ```bash
 google-chrome-stable --user-data-dir=<home folder "~" not supported>/.chrome-debugging-user-dir --remote-debugging-port=9222
 ```
 
-If the terminal prints `Opening in existing browser session.`, close all Chrome windows and try again.
+If the terminal prints `Opening in existing browser session.`, close all Chrome windows and try again. In the browser that opened, log in to the Google account you want to test with.
 
-### 2. Log in to Google
+### 2. Start ngrok
 
-Inside the browser that opened, log in to the Google account you want to use for testing.
-
-### 3. Start ngrok
-
-The "happy path" test creates a real meeting and waits for Google Cloud Tasks to call the local server's DELETE endpoint at the scheduled time. Cloud Tasks needs a public HTTPS URL to reach your local dev server:
+The "happy path" test creates a real meeting and waits for Cloud Tasks to call `DELETE /api/meeting/[meetingCode]` on the backend at the scheduled end. Cloud Tasks needs a public HTTPS URL for that:
 
 ```bash
-ngrok http 3000
+ngrok http 3001
 ```
 
-Copy the forwarding URL (e.g. `https://xxxx.ngrok-free.app`) and set it in `.env.local`:
+Install ngrok natively (e.g. via its apt repository), not from snap: the snap cannot write its config to `~/.config/ngrok`.
+
+### 3. Configure the backend
+
+Create `apps/api/.env.local`:
 
 ```
-SITE_BASE_CLOUD_TASKS=https://xxxx.ngrok-free.app
+CLIENT_ID=<OAuth client id>
+CLIENT_SECRET=<OAuth client secret, from Secret Manager "client-secret">
+PROJECT_ID=no-meeting-overtime
+QUEUE_LOCATION=europe-west1
+SITE_BASE=http://localhost:3000
+SITE_BASE_CLOUD_TASKS=<ngrok forwarding URL>
+CLOUD_TASKS_SERVICE_ACCOUNT=backend-app@no-meeting-overtime.iam.gserviceaccount.com
+NEXT_PUBLIC_MEETING_END_MINUTES_OFFSET=0
 ```
 
-### 4. Start the dev server
+`http://localhost:3000/api/get-token` must be an authorized redirect URI of the OAuth client. Google credentials come from ADC, or from `GOOGLE_OAUTH_ACCESS_TOKEN` if it is set.
 
-Load env vars from `.env.local` and start Next.js:
+### 4. Start the backend
+
+Either run the production image (tests the Dockerfile too):
 
 ```bash
-set -a && source .env.local && set +a && pnpm dev
+docker build -f apps/api/Dockerfile --build-arg NEXT_PUBLIC_MEETING_END_MINUTES_OFFSET=0 -t hangup-api:e2e .
+docker run --rm -p 3001:8080 --env-file apps/api/.env.local -e GOOGLE_OAUTH_ACCESS_TOKEN hangup-api:e2e
 ```
 
-### 5. Set environment variables
+or the dev server:
 
 ```bash
-# Required when multiple Google accounts are signed in:
-export GMAIL_USER=you@gmail.com
-
-# Disable the minimum meeting time check so short test meetings work:
-export NEXT_PUBLIC_MEETING_END_MINUTES_OFFSET="0"
+pnpm -C apps/api dev
 ```
 
-The easiest approach is to put all required env vars (including the ones above) in `.env.local` and load them before running. The VS Code launch configurations ("Run E2E" and "Run E2E --test-only") do this automatically via `envFile`.
+`NEXT_PUBLIC_MEETING_END_MINUTES_OFFSET` is inlined at build time, so the image needs it as a build argument to allow the test's 30-second meeting.
+
+### 5. Start the web app
+
+Create `apps/web/.env.local`:
+
+```
+NEXT_PUBLIC_MEETING_END_MINUTES_OFFSET=0
+API_ORIGIN=http://localhost:3001
+```
+
+```bash
+pnpm -C apps/web dev
+```
 
 ### 6. Run the tests
 
 ```bash
-# Run only tests marked with .only (recommended):
-pnpm test:e2e:only
-
-# Run all e2e tests:
-pnpm test:e2e
+# GMAIL_USER is required when multiple Google accounts are signed in.
+GMAIL_USER=you@gmail.com pnpm -C apps/web test:e2e
 ```
 
 > **Note:** The VS Code Playwright extension requires the same Chrome and ngrok setup as the CLI — it does not start Chrome or the dev server for you.
 
 
-Don't install glcoud from snap. You won't let you install the terraform extension
-terraform can be installed from snap
+## Infrastructure (Terraform)
 
+All GCP resources are defined in `terraform/`; the state lives in a GCS bucket (`terraform/backend.tf`). `terraform/tf.sh` runs Terraform from any directory, initializes it and checks for credentials first:
 
-`terraform plan`
+```bash
+gcloud auth application-default login   # or export GOOGLE_OAUTH_ACCESS_TOKEN
+terraform/tf.sh plan
+terraform/tf.sh apply
+```
+
+Install gcloud natively, not from snap: the snap cannot install the Terraform extension.
+
+Troubleshooting:
 
 `storage: object doesn't exist`? -> `gcloud auth application-default set-quota-project no-meeting-overtime`
 
 `oauth2: "invalid_grant" "Token has been expired or revoked."`? -> `gcloud auth application-default login`
-
-`failed precondition: due to quota restrictions, cannot run builds in this region, see https://cloud.google.com/build/docs/locations#restricted_regions_for_some_projects ` when building. Go to Quota > Cloud Build API > Concurrent Build CPUs (Regional Public Pool) per region per build_origin and request a value > 0
